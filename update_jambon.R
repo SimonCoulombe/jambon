@@ -33,7 +33,7 @@ download_json <- function(id){
 
 
 download_mp3 <- function(url){
-  download.file(url, destfile = paste0("/mnt/ironwolf_4tb/maurais/audio/", basename(url)))
+  download.file(url, destfile = paste0("/disks/ironwolf_4tb/maurais/audio/", basename(url)))
   return(TRUE)
 }
 possibly_read_json = possibly(.f = read_spread_json, otherwise = "Error")
@@ -41,11 +41,11 @@ possibly_download_json <- possibly(.f = download_json, otherwise = "Error")
 possibly_download_mp3 <- possibly(.f = download_mp3, otherwise = "Error")
 
 # get last json saved in the csv
-old_csv <- read_csv("historique_choi.csv") %>%
+old_csv <- read_csv("/disks/ironwolf_4tb/maurais/historique_choi.csv") %>%
   mutate(mp3_title_date = as.character(mp3_title_date))
 last_json <- max(old_csv$id)
 #get last downloaded  json
-#last_json <- max(as.numeric(stringr::str_replace(list.files("/mnt/ironwolf_4tb/maurais/json"), ".json", "")))
+#last_json <- max(as.numeric(stringr::str_replace(list.files("/disks/ironwolf_4tb/maurais/json"), ".json", "")))
 
 
 # try next 1000
@@ -60,7 +60,7 @@ ready_for_csv <- bind_rows(read_all_json[worked]) %>% # only keep rows for which
 
 mp3_urls_in_new_json <-unique(ready_for_csv$url)
 mp3_in_new_json <-  basename(mp3_urls_in_new_json)
-mp3_already_downloaded <- list.files("/mnt/ironwolf_4tb/maurais/audio/")
+mp3_already_downloaded <- list.files("/disks/ironwolf_4tb/maurais/audio/")
 missing_files <- mp3_urls_in_new_json[!(mp3_in_new_json %in% mp3_already_downloaded)]
 download_results <- furrr::future_map(missing_files, possibly_download_mp3, .progress= TRUE)  # download new mp3s
 
@@ -69,7 +69,7 @@ download_results <- furrr::future_map(missing_files, possibly_download_mp3, .pro
 mp3_to_id <- tibble(url = missing_files[unlist(download_results)]) %>%
   mutate(mp3 = basename(url))
 
-mp3_files <- paste0("/mnt/ironwolf_4tb/maurais/audio/",mp3_to_id$mp3)
+mp3_files <- paste0("/disks/ironwolf_4tb/maurais/audio/",mp3_to_id$mp3)
 
 get_id3tag <- function(file){
   system( paste0("id3info " , file), intern = TRUE)
@@ -103,8 +103,8 @@ historique_choi <-
             new_csv
   )
 
-write_csv(historique_choi, paste0("historique_choi_", as.character(Sys.Date()), ".csv"))
-write_csv(historique_choi, "historique_choi.csv")
+write_csv(historique_choi, paste0("/disks/ironwolf_4tb/maurais/historique_choi_", as.character(Sys.Date()), ".csv"))
+write_csv(historique_choi, "/disks/ironwolf_4tb/maurais/historique_choi.csv")
 #
 # ss2 <- gs4_create(
 #   "griffe-a-jambon",
