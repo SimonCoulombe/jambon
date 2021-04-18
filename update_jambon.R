@@ -7,8 +7,10 @@ library(googlesheets4)
 plan("multisession", workers = availableCores() - 1)
 
 
+path <- "/disks/ironwolf_4tb/maurais/json/"
+
 read_spread_json <- function(id){
-  spread_all(jsonlite::read_json(paste0("/mnt/ironwolf_4tb/maurais/json/", id, ".json"))) %>%
+  spread_all(jsonlite::read_json(paste0("/disks/ironwolf_4tb/maurais/json/", id, ".json"))) %>%
 
     mutate(id = id,
            url =
@@ -23,7 +25,7 @@ read_spread_json <- function(id){
 
 download_json <- function(id){
   download.file(paste0("https://api.podboxx.com/api//embed/", id),
-                destfile = paste0("/mnt/ironwolf_4tb/maurais/json/",
+                destfile = paste0("/disks/ironwolf_4tb/maurais/json/",
                                   id, ".json")
   )
   return(TRUE)
@@ -118,3 +120,16 @@ sheet_write(
   ,
   ss= "1ZyKtcac0ILOw_TTazrKSAABT8iXi9Bi2sKoQA5EVRyI",
   sheet = "historique")
+
+
+
+
+sheet_write(
+  historique_choi %>%
+    filter(type =="podcast") %>%
+    mutate(duration = as.character(duration)) %>%
+    filter(str_detect(toupper(desc), "DUHAIME") | str_detect(toupper(title), "DUHAIME")) %>%
+    select(id, document_id, channel_title, title, duration, desc, mp3_title_date, url  )
+  ,
+  ss= "1ZyKtcac0ILOw_TTazrKSAABT8iXi9Bi2sKoQA5EVRyI",
+  sheet = "duhaime")
