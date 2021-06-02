@@ -28,7 +28,7 @@ auth_as(
 #   )
 # }
 
-jambon_frais <- get_timeline(user = "jefffillion", n = 200) %>%
+jambon_frais <- get_timeline(user = "jefffillionfun", n = 20000) %>%
   mutate(across(where(is.list), as.character))
 # chr_vars <- jambon_frais %>% select_if(is_character) %>% colnames()
 # num_vars <- jambon_frais %>% select_if(is_numeric) %>% colnames()
@@ -130,6 +130,10 @@ if(length(jambon_a_screenshotter > 0)){
 } else{message(Sys.Date(), Sys.time()," - no new tweet to screenshot")}
 
 
+## datetime plus vieux tweet disponible
+oldest_available_datetime <- jambon_frais %>% summarise(old = min(created_at))
 
-
+manually_deleted_tweets <- jambon_total %>%
+  filter(as.numeric(created_at) > as.numeric(oldest_available_datetime))  %>% # should be available
+  filter(!(status_id %in% jambon_frais$status_id)) # but isnt
 
