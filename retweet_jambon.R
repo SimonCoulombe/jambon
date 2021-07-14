@@ -10,8 +10,6 @@ auth_as(
   )
 )
 
-
-
 vieux_jambon <- read_csv("tweet_jeff.csv",
                          col_types =
                            cols(
@@ -98,13 +96,17 @@ jambon_deja_retweete <- get_timeline(user = "perroquetdejeff", n = 25000) %>%
 
 jambon_a_tweeter <- vieux_jambon %>%
   filter(!(status_id  %in% jambon_deja_retweete)) %>%
-  arrange(status_id) %>%
-  pull(status_id)
+  arrange(status_id)
 
-if (length(jambon_a_tweeter) > 0 ){
+if (nrow(jambon_a_tweeter) > 0 ){
   message(Sys.time(), " - on retweete")
-  purrr::map(jambon_a_tweeter, ~  post_tweet(
-    status = .x,
-    media = paste0("/home/simon/git/jambon/screenshots/",  .x, ".png")
-  ))
+  purrr::map2(
+    jambon_a_tweeter$status_id,
+    jambon_a_tweeter$text  ,
+    ~  post_tweet(
+      status = paste0(.x, " ", word(str_replace_all(str_sub(.y ,1,280-1-str_length( .x)), "@", "."),1, -2)), # -2 pour enelverl e dernier mot qui est l'URL
+      #status = .x,
+      media = paste0("/home/simon/git/jambon/screenshots/",  .x, ".png")
+    )
+  )
 } else {message(Sys.time(), " - rien a  retweeter")}

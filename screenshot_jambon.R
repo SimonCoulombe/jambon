@@ -4,6 +4,8 @@ library(magrittr, quietly = TRUE)
 library(dplyr, quietly = TRUE)
 library(readr, quietly = TRUE)
 library(rtweet, quietly = TRUE)
+library(purrr, quietly = TRUE)
+#plan("multisession", workers = 2)
 auth_as(
   rtweet_bot(
     api_key =Sys.getenv("perroquetdejeff_api_key"),
@@ -28,12 +30,18 @@ auth_as(
 #   )
 # }
 
-jambon_frais <- get_timeline(user = "jefffillionfun", n = 20000) %>%
+jambon_frais1 <- get_timeline(user = "jefffillionfun", n = 20000) %>%
   mutate(across(where(is.list), as.character))
+
+jambon_frais2  <- get_timeline(user = "e_duhaime", n = 20000) %>%
+  mutate(across(where(is.list), as.character))
+
+
 # chr_vars <- jambon_frais %>% select_if(is_character) %>% colnames()
 # num_vars <- jambon_frais %>% select_if(is_numeric) %>% colnames()
 # lgl_vars <- jambon_frais %>% select_if(is_logical) %>% colnames()
 
+jambon_frais <- bind_rows(jambon_frais1, jambon_frais2)
 vieux_jambon <- read_csv("/home/simon/git/jambon/tweet_jeff.csv",
                          col_types =
                            cols(
@@ -123,17 +131,22 @@ jambon_total %>%  write_csv(., paste0("tweet_jeff", as.character(Sys.Date()),".c
 jambon_total %>%  write_csv(., "tweet_jeff.csv")
 
 jambon_deja_screenshotte <- basename(list.files("/home/simon/git/jambon/screenshots")) %>% stringr::str_sub(1,-5L)
-jambon_a_screenshotter <- jambon_total$status_id[ !(jambon_total$status_id %in% jambon_deja_screenshotte)]
-if(length(jambon_a_screenshotter > 0)){
+jambon_a_screenshotter <- jambon_total[ !(jambon_total$status_id %in% jambon_deja_screenshotte),]
+if(nrow(jambon_a_screenshotter > 0)){
 
-  purrr::map(jambon_a_screenshotter, ~ tweetrmd::tweet_screenshot(tweetrmd::tweet_url("jefffillion", .x), file = paste0("/home/simon/git/jambon/screenshots/",  .x, ".png")))
+  purrr::map2(jambon_a_screenshotter$status_id,
+                     jambon_a_screenshotter$user_id,
+                     ~ tweetrmd::tweet_screenshot(
+                       tweetrmd::tweet_url(.y, .x),
+                       file = paste0("/home/simon/git/jambon/screenshots/",  .x, ".png"))
+                     )
 } else{message(Sys.Date(), Sys.time()," - no new tweet to screenshot")}
 
 
-## datetime plus vieux tweet disponible
-oldest_available_datetime <- jambon_frais %>% summarise(old = min(created_at))
-
-manually_deleted_tweets <- jambon_total %>%
-  filter(as.numeric(created_at) > as.numeric(oldest_available_datetime))  %>% # should be available
-  filter(!(status_id %in% jambon_frais$status_id)) # but isnt
-
+# ## datetime plus vieux tweet disponible
+# oldest_available_datetime <- jambon_frais %>% summarise(old = min(created_at))
+#
+# manually_deleted_tweets <- jambon_total %>%
+#   filter(as.numeric(created_at) > as.numeric(oldest_available_datetime))  %>% # should be available
+#   filter(!(status_id %in% jambon_frais$status_id)) # but isnt
+#
