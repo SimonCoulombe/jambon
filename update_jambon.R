@@ -13,9 +13,10 @@ read_spread_json <- function(id){
   spread_all(jsonlite::read_json(paste0("/disks/ironwolf_4tb/maurais/json/", id, ".json"))) %>%
 
     mutate(id = id,
+           src = as.character(src),
            url =
              str_replace(
-               str_sub(src,3), # enlever les 2 premières lettres
+               src, #str_sub(src,3), # enlever les 2 premières lettres (obsolete, avant le as.character(src) il y avait des caractères avant http.)
                "\\?[^\\?]*$", "" #  un?, suivi du plus de caractère possible sauf un autre ?, bref le dernier ? et tout ce qui suit
              )
     ) %>%
@@ -50,7 +51,7 @@ last_json <- max(old_csv$id)
 
 
 # try next 1000
-json_id_to_try <- seq(last_json +1, last_json+100)
+json_id_to_try <- seq(last_json +1, last_json+1000)
 download_all_json <- furrr::future_map(json_id_to_try, possibly_download_json)
 read_all_json <- furrr::future_map(json_id_to_try, possibly_read_json)
 worked <- map_lgl(read_all_json, function(x){is_tibble(x)})
@@ -119,8 +120,8 @@ if(sum(worked)>0){
     historique_choi %>%
       filter(type =="podcast", channel_title %in% c("JeffFillion.com", "RADIO X BEST OF")) %>%
       mutate(duration = as.character(duration)) %>%
-      arrange(desc(id), document_id) %>% 
-      select(channel_title, title, duration, desc, date = mp3_title_date, url  ) 
+      arrange(desc(id), document_id) %>%
+      select(channel_title, title, duration, desc, date = mp3_title_date, url  )
       ,
     ss= "1ZyKtcac0ILOw_TTazrKSAABT8iXi9Bi2sKoQA5EVRyI",
     sheet = "historique")
@@ -130,7 +131,7 @@ if(sum(worked)>0){
       filter(type =="podcast") %>%
       mutate(duration = as.character(duration)) %>%
       filter(str_detect(toupper(desc), "DUHAIME") | str_detect(toupper(title), "DUHAIME")) %>%
-      arrange(desc(id), document_id) %>% 
+      arrange(desc(id), document_id) %>%
       select(channel_title, title, duration, desc, date = mp3_title_date, url  )
     ,
     ss= "1ZyKtcac0ILOw_TTazrKSAABT8iXi9Bi2sKoQA5EVRyI",
